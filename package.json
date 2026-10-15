@@ -1,0 +1,17 @@
+{
+  "name": "three-tier-student-management-root",
+  "version": "1.0.0",
+  "description": "Root configuration for Three-Tier Student Information Management System",
+  "scripts": {
+    "install-backend": "npm install --prefix backend",
+    "postinstall": "npm install --prefix backend",
+    "build": "npm install --prefix backend",
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5"
+  }
+}
