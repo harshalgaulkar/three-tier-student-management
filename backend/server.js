@@ -78,6 +78,61 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// Diagnostic endpoint to check MongoDB Atlas connectivity in real time
+app.get('/api/debug-db', async (req, res) => {
+  const mongoUri = process.env.MONGODB_URI;
+
+  if (!mongoUri) {
+    return res.status(200).json({
+      configured: false,
+      connected: false,
+      message: 'MONGODB_URI environment variable is missing on Render.',
+      instructions: 'Go to Render Dashboard > Environment > Add MONGODB_URI',
+    });
+  }
+
+  // Mask password for display
+  const maskedUri = mongoUri.replace(/(:\/\/[^:]+:)[^@]+(@)/, '$1******$2');
+
+  try {
+    const mongoose = require('mongoose');
+    if (mongoose.connection.readyState === 1) {
+      return res.status(200).json({
+        configured: true,
+        connected: true,
+        uri: maskedUri,
+        message: 'Already connected to MongoDB Atlas!',
+        databaseName: mongoose.connection.name,
+      });
+    }
+
+    await mongoose.connect(mongoUri, {
+      dbName: 'studentDB',
+      serverSelectionTimeoutMS: 6000,
+    });
+
+    return res.status(200).json({
+      configured: true,
+      connected: true,
+      uri: maskedUri,
+      message: 'Successfully connected to MongoDB Atlas!',
+      databaseName: mongoose.connection.name,
+    });
+  } catch (err) {
+    return res.status(200).json({
+      configured: true,
+      connected: false,
+      uri: maskedUri,
+      errorMessage: err.message,
+      errorName: err.name,
+      code: err.code,
+      tip: err.message.includes('buffering timed out') || err.message.includes('Server selection timed out')
+        ? 'MongoDB Atlas Network Access is blocking Render. Go to MongoDB Atlas > Network Access > Add IP Address > 0.0.0.0/0 (Allow from anywhere).'
+        : 'Please verify the database username and password in MONGODB_URI.',
+    });
+  }
+});
+
 // Middleware to verify database connectivity before running CRUD
 app.use('/api/students', (req, res, next) => {
   const dbStatus = getDBStatus();
