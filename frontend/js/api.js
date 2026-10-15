@@ -2,14 +2,13 @@
 // Connects Netlify Presentation Layer to Render Application Layer
 
 const API = (() => {
-  // Determine default base URL:
-  // If hosted locally, default to local backend; otherwise default to Render service URL.
-  const DEFAULT_RENDER_URL = 'https://student-api.onrender.com';
+  // Configured Render URL for this deployment
+  const DEFAULT_RENDER_URL = 'https://three-tier-student-management.onrender.com';
   const LOCAL_URL = 'http://localhost:5000';
 
   const getBaseUrl = () => {
     const saved = localStorage.getItem('sims_backend_url');
-    if (saved) return saved.trim().replace(/\/+$/, '');
+    if (saved && saved.trim()) return saved.trim().replace(/\/+$/, '');
 
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return LOCAL_URL;
@@ -25,7 +24,7 @@ const API = (() => {
     }
   };
 
-  const request = async (endpoint, options = {}) => {
+  const request = async (endpoint, options = {}, retries = 1) => {
     const baseUrl = getBaseUrl();
     const url = `${baseUrl}${endpoint}`;
 
@@ -43,15 +42,25 @@ const API = (() => {
     };
 
     try {
+      const controller = new AbortController();
+      // Render free tier can take up to 45s to wake up on cold boot
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+      config.signal = controller.signal;
+
       const response = await fetch(url, config);
-      const data = await response.json();
+      clearTimeout(timeoutId);
+
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        throw new Error(data.message || `HTTP Error ${response.status}: ${response.statusText}`);
+        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
       }
 
       return data;
     } catch (error) {
+      if (error.name === 'AbortError') {
+        throw new Error('Render backend is waking up from sleep mode (cold start). Please retry in 20-30 seconds.');
+      }
       console.error(`API Request failed for [${config.method || 'GET'}] ${url}:`, error);
       throw error;
     }
