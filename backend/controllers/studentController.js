@@ -1,10 +1,25 @@
 const mongoose = require('mongoose');
 const Student = require('../models/Student');
+const { getDBStatus } = require('../config/database');
+
+const checkDBConnection = (res) => {
+  const status = getDBStatus();
+  if (!status.isConnected) {
+    res.status(503).json({
+      success: false,
+      message: 'Database not connected. Please ensure MONGODB_URI is added in your Render Dashboard Environment Variables.',
+      databaseStatus: status,
+    });
+    return false;
+  }
+  return true;
+};
 
 // @desc    Get all students (or filter by search term)
 // @route   GET /api/students
 // @access  Public
 const getStudents = async (req, res) => {
+  if (!checkDBConnection(res)) return;
   try {
     const { search, department } = req.query;
     let query = {};
@@ -42,6 +57,7 @@ const getStudents = async (req, res) => {
 // @route   GET /api/students/:id
 // @access  Public
 const getStudentById = async (req, res) => {
+  if (!checkDBConnection(res)) return;
   try {
     const { id } = req.params;
     let student = null;
@@ -82,6 +98,7 @@ const getStudentById = async (req, res) => {
 // @route   POST /api/students
 // @access  Public
 const createStudent = async (req, res) => {
+  if (!checkDBConnection(res)) return;
   try {
     const { studentId, name, email, department, semester, contact } = req.body;
 
@@ -152,6 +169,7 @@ const createStudent = async (req, res) => {
 // @route   PUT /api/students/:id
 // @access  Public
 const updateStudent = async (req, res) => {
+  if (!checkDBConnection(res)) return;
   try {
     const { id } = req.params;
     let student = null;
@@ -218,6 +236,7 @@ const updateStudent = async (req, res) => {
 // @route   DELETE /api/students/:id
 // @access  Public
 const deleteStudent = async (req, res) => {
+  if (!checkDBConnection(res)) return;
   try {
     const { id } = req.params;
     let student = null;
