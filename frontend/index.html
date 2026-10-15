@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Student Information Management System | Three-Tier Cloud Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Header / Navigation -->
+  <header class="navbar">
+    <div class="nav-container">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fa-solid fa-graduation-cap"></i>
+        </div>
+        <div class="brand-text">
+          <h1>EduCloud SIMS</h1>
+          <span class="subtitle">Student Information Management System</span>
+        </div>
+      </div>
+
+      <!-- Cloud Architecture Badge Pills -->
+      <div class="arch-pills">
+        <div class="pill tier-frontend" title="Tier 1: Presentation Layer deployed on Netlify">
+          <span class="dot"></span>
+          <i class="fa-solid fa-desktop"></i>
+          <span>Netlify UI</span>
+        </div>
+        <div class="pill-connector"><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="pill tier-backend" id="backendPill" title="Tier 2: Application Layer deployed on Render">
+          <span class="dot live-pulse"></span>
+          <i class="fa-solid fa-server"></i>
+          <span id="backendStatusText">Render API</span>
+        </div>
+        <div class="pill-connector"><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="pill tier-database" title="Tier 3: Database Layer hosted on MongoDB Atlas">
+          <span class="dot"></span>
+          <i class="fa-solid fa-database"></i>
+          <span>MongoDB Atlas</span>
+        </div>
+      </div>
+
+      <!-- Settings & Actions -->
+      <div class="nav-actions">
+        <button id="apiConfigBtn" class="btn btn-secondary btn-icon" title="Configure Backend API URL">
+          <i class="fa-solid fa-gear"></i>
+          <span>API Config</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+    <div class="container">
+
+      <!-- Architecture Banner -->
+      <section class="banner-card">
+        <div class="banner-left">
+          <span class="tag"><i class="fa-solid fa-cloud"></i> Three-Tier Cloud Architecture</span>
+          <h2>Cloud-Integrated Student Management</h2>
+          <p>
+            Presentation on <strong>Netlify</strong> &bull;
+            Business Logic on <strong>Render</strong> &bull;
+            Database on <strong>MongoDB Atlas</strong> (harshalgaulkar43@gmail.com)
+          </p>
+        </div>
+        <div class="banner-right">
+          <button class="btn btn-primary" id="openAddModalBtn">
+            <i class="fa-solid fa-plus"></i> Add New Student
+          </button>
+        </div>
+      </section>
+
+      <!-- Stats Overview -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon icon-blue">
+            <i class="fa-solid fa-users"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Total Students</span>
+            <h3 class="stat-value" id="statTotalStudents">0</h3>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-purple">
+            <i class="fa-solid fa-building-columns"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Departments</span>
+            <h3 class="stat-value" id="statDepartments">0</h3>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-green">
+            <i class="fa-solid fa-chart-line"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">Avg. Semester</span>
+            <h3 class="stat-value" id="statAvgSemester">-</h3>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon icon-amber">
+            <i class="fa-solid fa-network-wired"></i>
+          </div>
+          <div class="stat-info">
+            <span class="stat-label">API Health</span>
+            <h3 class="stat-value" id="statApiHealth">Checking...</h3>
+          </div>
+        </div>
+      </section>
+
+      <!-- Data Filter & Action Toolbar -->
+      <section class="toolbar-card">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search by ID (e.g. ST101), Name, or Email..."
+          />
+          <button id="clearSearchBtn" class="clear-btn" style="display: none;">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+
+        <div class="filter-controls">
+          <select id="departmentFilter" class="select-control">
+            <option value="">All Departments</option>
+            <option value="Computer Science">Computer Science</option>
+            <option value="Information Technology">Information Technology</option>
+            <option value="Electronics">Electronics</option>
+            <option value="Mechanical">Mechanical</option>
+            <option value="Civil">Civil</option>
+          </select>
+
+          <button id="refreshBtn" class="btn btn-secondary btn-icon" title="Refresh Student List">
+            <i class="fa-solid fa-rotate-right"></i>
+            <span>Refresh</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- Student Records Table -->
+      <section class="table-container">
+        <div class="table-header">
+          <h3><i class="fa-solid fa-list-check"></i> Enrolled Students Directory</h3>
+          <span class="count-badge" id="recordCountBadge">0 records</span>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table" id="studentsTable">
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Student Name</th>
+                <th>Email Address</th>
+                <th>Department</th>
+                <th>Semester</th>
+                <th>Contact</th>
+                <th class="text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="studentsTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Empty & Loading States -->
+        <div class="state-container" id="loadingState">
+          <div class="spinner"></div>
+          <p>Connecting to Render Backend and MongoDB Atlas...</p>
+        </div>
+
+        <div class="state-container" id="emptyState" style="display: none;">
+          <div class="empty-icon"><i class="fa-solid fa-user-slash"></i></div>
+          <h4>No Students Found</h4>
+          <p>No student records match your query or the database is currently empty.</p>
+          <button class="btn btn-primary" id="emptyAddBtn">
+            <i class="fa-solid fa-plus"></i> Add First Student
+          </button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Add Student Modal -->
+  <div class="modal-overlay" id="addModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-plus"></i> Add New Student</h3>
+        <button class="modal-close" data-close="addModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="addStudentForm">
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="addStudentId">Student ID <span class="required">*</span></label>
+              <input type="text" id="addStudentId" name="studentId" placeholder="e.g. ST101" required />
+            </div>
+
+            <div class="form-group">
+              <label for="addName">Full Name <span class="required">*</span></label>
+              <input type="text" id="addName" name="name" placeholder="e.g. Rahul Sharma" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="addEmail">Email Address <span class="required">*</span></label>
+              <input type="email" id="addEmail" name="email" placeholder="e.g. rahul@example.com" required />
+            </div>
+
+            <div class="form-group">
+              <label for="addDepartment">Department <span class="required">*</span></label>
+              <select id="addDepartment" name="department" required>
+                <option value="">Select Department</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Civil">Civil</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="addSemester">Semester (1-10) <span class="required">*</span></label>
+              <input type="number" id="addSemester" name="semester" min="1" max="10" placeholder="e.g. 5" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="addContact">Contact Number <span class="required">*</span></label>
+              <input type="tel" id="addContact" name="contact" placeholder="e.g. 9876543210" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="addModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveAddBtn">
+            <i class="fa-solid fa-check"></i> Add Student
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Edit Student Modal -->
+  <div class="modal-overlay" id="editModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-user-pen"></i> Edit Student Details</h3>
+        <button class="modal-close" data-close="editModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="editStudentForm">
+        <input type="hidden" id="editDocId" name="docId" />
+        <div class="modal-body">
+          <div class="form-grid">
+            <div class="form-group">
+              <label for="editStudentId">Student ID</label>
+              <input type="text" id="editStudentId" name="studentId" disabled />
+            </div>
+
+            <div class="form-group">
+              <label for="editName">Full Name <span class="required">*</span></label>
+              <input type="text" id="editName" name="name" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="editEmail">Email Address <span class="required">*</span></label>
+              <input type="email" id="editEmail" name="email" required />
+            </div>
+
+            <div class="form-group">
+              <label for="editDepartment">Department <span class="required">*</span></label>
+              <select id="editDepartment" name="department" required>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electronics">Electronics</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Civil">Civil</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="editSemester">Semester (1-10) <span class="required">*</span></label>
+              <input type="number" id="editSemester" name="semester" min="1" max="10" required />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="editContact">Contact Number <span class="required">*</span></label>
+              <input type="tel" id="editContact" name="contact" required />
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-close="editModal">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveEditBtn">
+            <i class="fa-solid fa-check"></i> Update Student
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="deleteModal">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-triangle-exclamation text-danger"></i> Delete Student</h3>
+        <button class="modal-close" data-close="deleteModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p>Are you sure you want to delete student <strong id="deleteStudentName"></strong> (<span id="deleteStudentId"></span>)?</p>
+        <p class="text-muted small">This action cannot be undone and will permanently remove the record from MongoDB Atlas.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-close="deleteModal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+          <i class="fa-solid fa-trash-can"></i> Delete
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- API URL Configuration Modal -->
+  <div class="modal-overlay" id="configModal">
+    <div class="modal">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-sliders"></i> Tier 2 (Render) Backend Configuration</h3>
+        <button class="modal-close" data-close="configModal"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="modal-body">
+        <p class="description">
+          The frontend running on <strong>Netlify</strong> connects to the backend REST API on <strong>Render</strong>.
+          You can specify your deployed Render URL below or use <code>http://localhost:5000</code> for local testing.
+        </p>
+
+        <div class="form-group">
+          <label for="backendUrlInput">Backend API Base URL</label>
+          <input
+            type="text"
+            id="backendUrlInput"
+            placeholder="https://your-render-service.onrender.com"
+          />
+          <small class="helper-text">Example: <code>https://student-api.onrender.com</code> or <code>http://localhost:5000</code></small>
+        </div>
+
+        <div class="config-info-box">
+          <div class="info-row">
+            <span><strong>Database User:</strong></span>
+            <span>harshalgaulkar43@gmail.com</span>
+          </div>
+          <div class="info-row">
+            <span><strong>Target DB / Collection:</strong></span>
+            <span>studentDB / students</span>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" id="testConnectionBtn">
+          <i class="fa-solid fa-plug"></i> Test Connection
+        </button>
+        <button type="button" class="btn btn-primary" id="saveConfigBtn">
+          <i class="fa-solid fa-floppy-disk"></i> Save URL
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- JavaScript -->
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

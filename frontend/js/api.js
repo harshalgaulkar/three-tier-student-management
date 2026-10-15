@@ -1,0 +1,106 @@
+// API Client for Three-Tier Architecture
+// Connects Netlify Presentation Layer to Render Application Layer
+
+const API = (() => {
+  // Determine default base URL:
+  // If hosted locally, default to local backend; otherwise default to Render service URL.
+  const DEFAULT_RENDER_URL = 'https://student-api.onrender.com';
+  const LOCAL_URL = 'http://localhost:5000';
+
+  const getBaseUrl = () => {
+    const saved = localStorage.getItem('sims_backend_url');
+    if (saved) return saved.trim().replace(/\/+$/, '');
+
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return LOCAL_URL;
+    }
+    return DEFAULT_RENDER_URL;
+  };
+
+  const setBaseUrl = (url) => {
+    if (!url) {
+      localStorage.removeItem('sims_backend_url');
+    } else {
+      localStorage.setItem('sims_backend_url', url.trim().replace(/\/+$/, ''));
+    }
+  };
+
+  const request = async (endpoint, options = {}) => {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}${endpoint}`;
+
+    const defaultHeaders = {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    };
+
+    const config = {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...(options.headers || {}),
+      },
+    };
+
+    try {
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || `HTTP Error ${response.status}: ${response.statusText}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error(`API Request failed for [${config.method || 'GET'}] ${url}:`, error);
+      throw error;
+    }
+  };
+
+  return {
+    getBaseUrl,
+    setBaseUrl,
+
+    // Health check
+    checkHealth: async () => {
+      return request('/api/health');
+    },
+
+    // Fetch all students (with optional query filters)
+    getStudents: async (search = '', department = '') => {
+      const params = new URLSearchParams();
+      if (search) params.append('search', search);
+      if (department) params.append('department', department);
+      const queryString = params.toString() ? `?${params.toString()}` : '';
+      return request(`/api/students${queryString}`);
+    },
+
+    // Fetch single student
+    getStudentById: async (id) => {
+      return request(`/api/students/${encodeURIComponent(id)}`);
+    },
+
+    // Create student
+    createStudent: async (studentData) => {
+      return request('/api/students', {
+        method: 'POST',
+        body: JSON.stringify(studentData),
+      });
+    },
+
+    // Update student
+    updateStudent: async (id, studentData) => {
+      return request(`/api/students/${encodeURIComponent(id)}`, {
+        method: 'PUT',
+        body: JSON.stringify(studentData),
+      });
+    },
+
+    // Delete student
+    deleteStudent: async (id) => {
+      return request(`/api/students/${encodeURIComponent(id)}`, {
+        method: 'DELETE',
+      });
+    },
+  };
+})();
